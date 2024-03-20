@@ -5,14 +5,13 @@ import daos.StudentDAO;
 import models.Student;
 import utils.FormatData;
 import views.OfficerFrame;
-
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
 import java.awt.event.ActionEvent;
 import java.util.List;
 
-public class OfficerController implements IController {
+public class OfficerController {
     private final OfficerFrame view = createFrame();
     private List<Student> studentList = StudentDAO.getInstance().getAll();
 
@@ -30,9 +29,8 @@ public class OfficerController implements IController {
         view.getBtnDelete().addActionListener(this::deleteAction);
         view.getBtnSearch().addActionListener(this::searchAction);
         view.getTblStudentList().getSelectionModel().addListSelectionListener(this::selectRow);
+        view.getTblStudentList().setAutoCreateRowSorter(true);
     }
-
-
 
     private OfficerFrame createFrame() {
         try {
@@ -59,7 +57,7 @@ public class OfficerController implements IController {
             if(!isExisted() && StudentDAO.getInstance().insert(student) > 0) {
                 studentList = StudentDAO.getInstance().getAll();
                 fillStudentTable();
-                selectedStudent = resultSearch(student.getId(),studentList);
+                selectedStudent = SearchStudent.resultSearch(student.getId(),studentList);
                 JOptionPane.showMessageDialog(view,"Add new student successful!");
             }
             else {
@@ -75,14 +73,28 @@ public class OfficerController implements IController {
 
     private void saveAction(ActionEvent actionEvent) {
         if(selectedStudent != null) {
+            if (!view.getTxtID().getText().isBlank() && !view.getTxtName().getText().isBlank()) {
+                selectedStudent.setName(view.getTxtName().getText());
+                selectedStudent.setAddress(view.getTxtAddress().getText());
+                selectedStudent.setGender(view.getRdoFemale().isSelected() ? "FEMALE" : "MALE");
+                if (!view.getTxtEmail().getText().isBlank() && !view.getTxtPhone().getText().isBlank() && isValidInformation()) {
+                    selectedStudent.setPhone(view.getTxtPhone().getText());
+                    selectedStudent.setEmail(view.getTxtEmail().getText());
+                }
+                else {
+                    JOptionPane.showMessageDialog(view,"Phone or email is invalid!");
+                    return;
+                }
+            }
             if(StudentDAO.getInstance().update(selectedStudent) > 0) {
                 if(!isValidInformation()) {
                     JOptionPane.showMessageDialog(view,"Email or phone number is invalid");
                     return;
                 }
                 studentList = StudentDAO.getInstance().getAll();
-                selectedStudent = resultSearch(selectedStudent.getId(),studentList);
+                selectedStudent = SearchStudent.resultSearch(selectedStudent.getId(),studentList);
                 fillStudentTable();
+                JOptionPane.showMessageDialog(view,"Done!");
             }
             else {
                 JOptionPane.showMessageDialog(view,"Nothing be changed");
@@ -121,7 +133,7 @@ public class OfficerController implements IController {
 
     private void searchAction(ActionEvent actionEvent) {
         if (!view.getTxtSearch().getText().isBlank()) {
-            Student student = resultSearch(view.getTxtSearch().getText(),studentList);
+            Student student = SearchStudent.resultSearch(view.getTxtSearch().getText(),studentList);
             if (student != null) {
                 fillForm(student);
                 selectedStudent = student;

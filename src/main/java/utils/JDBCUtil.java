@@ -4,7 +4,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-public class JDBCUtil {
+public final class JDBCUtil {
     private static final String hostName = "DESKTOP-HL72S6V\\BRAVOS:1433;";
     private static final String username = "admin";
     private static final String password = "BaoSQL2005@";
@@ -17,7 +17,7 @@ public class JDBCUtil {
             "integratedSecurity=false;";
 
     public static Connection getConnection() {
-        Connection conn = null;
+        Connection conn;
         try {
             conn = DriverManager.getConnection(url,username,password);
         } catch (SQLException e) {

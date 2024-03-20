@@ -1,20 +1,20 @@
 package controller;
 
 import com.formdev.flatlaf.FlatDarkLaf;
-import daos.StudentDAO;
+import daos.GradeDAO;
 import models.Student;
 import views.LecturerFrame;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
 import java.awt.event.ActionEvent;
+import java.util.Comparator;
 import java.util.List;
 
-public class LecturerController implements IController {
+public class LecturerController {
     private final LecturerFrame view = createFrame();
     private Student selectedStudent = null;
-    private List<Student> studentList = StudentDAO.getInstance().getAll();
-    private List<Student> studentTopList = StudentDAO.getInstance().getTopStudent();
+    private List<Student> studentList = GradeDAO.getInstance().getAll();
 
     public LecturerController() {
         initEvent();
@@ -35,20 +35,19 @@ public class LecturerController implements IController {
 
     private void saveAction(ActionEvent actionEvent) {
         if(selectedStudent != null) {
-            if (getStudent() != null) {
-                selectedStudent = getStudent();
-                if(StudentDAO.getInstance().update(getStudent()) > 0) {
-                    studentList = StudentDAO.getInstance().getAll();
-                    studentTopList = StudentDAO.getInstance().getTopStudent();
+            selectedStudent.setMarkEnglish(Double.parseDouble(view.getTxtEnglish().getText()));
+            selectedStudent.setMarkIT(Double.parseDouble(view.getTxtIT().getText()));
+            selectedStudent.setMarkPhysicalEdu(Double.parseDouble(view.getTxtPE().getText()));
+                if(GradeDAO.getInstance().update(selectedStudent) > 0) {
+                    studentList = GradeDAO.getInstance().getAll();
+                    selectedStudent = SearchStudent.resultSearch(selectedStudent.getId(),studentList);
                     fillTheTable();
                     fillForm();
-                    selectedStudent = resultSearch(selectedStudent.getId(),studentList);
                     JOptionPane.showMessageDialog(view,"Saved!");
                 }
                 else {
                     JOptionPane.showMessageDialog(view,"Error");
                 }
-            }
         }
         else {
             JOptionPane.showMessageDialog(view, "Please choose a student!");
@@ -57,7 +56,7 @@ public class LecturerController implements IController {
 
     private void searchAction(ActionEvent actionEvent) {
         if (!view.getTxtSearchID().getText().isBlank()) {
-            Student student = resultSearch(view.getTxtSearchID().getText(),studentList);
+            Student student = SearchStudent.resultSearch(view.getTxtSearchID().getText(),studentList);
             if(student != null) {
                 selectedStudent = student;
                 fillForm();
@@ -68,6 +67,10 @@ public class LecturerController implements IController {
     }
 
     private void refreshAction(ActionEvent actionEvent) {
+        clear();
+    }
+
+    private void clear() {
         selectedStudent = null;
         view.getTxtSearchID().setText("");
         view.getLblName().setText("none");
@@ -80,12 +83,14 @@ public class LecturerController implements IController {
     }
 
     private void fillTheTable() {
-        if(!studentTopList.isEmpty()) {
+        studentList.sort(Comparator.comparing(Student::getAVG).reversed());
+        if(!studentList.isEmpty()) {
             DefaultTableModel defaultTableModel = (DefaultTableModel) view.getTblTopStudent().getModel();
             while (defaultTableModel.getRowCount() > 0) {
                 defaultTableModel.removeRow(0);
             }
-            for(Student student : studentTopList) {
+            for(int i = 0; i < 3; i++) {
+                Student student = studentList.get(i);
                 Object[] rowData = {student.getId(),student.getName(),student.getMarkEnglish(),
                         student.getMarkIT(),student.getMarkPhysicalEdu(),student.getAVG()};
                 defaultTableModel.addRow(rowData);
@@ -94,7 +99,7 @@ public class LecturerController implements IController {
     }
 
     private void nextAction(ActionEvent actionEvent) {
-        int selectedIndex = resultSearchIndex(selectedStudent.getId(), studentList);
+        int selectedIndex = SearchStudent.resultSearchIndex(selectedStudent, studentList);
         if(selectedIndex >= 0 && selectedIndex < studentList.size() - 1) {
             selectedStudent = studentList.get(selectedIndex + 1);
             fillForm();
@@ -106,7 +111,7 @@ public class LecturerController implements IController {
     }
 
     private void previousAction(ActionEvent actionEvent) {
-        int selectedIndex = resultSearchIndex(selectedStudent.getId(), studentList);
+        int selectedIndex = SearchStudent.resultSearchIndex(selectedStudent, studentList);
         if(selectedIndex > 0) {
             selectedStudent = studentList.get(selectedIndex - 1);
             fillForm();
@@ -133,11 +138,11 @@ public class LecturerController implements IController {
 
     private void showInfoAction(ActionEvent actionEvent) {
         if(selectedStudent != null) {
-            String msg = selectedStudent.getId() + "\n"
-                    + selectedStudent.getName() + "\n"
-                    + selectedStudent.getPhone() + "\n"
-                    + selectedStudent.getEmail() + "\n"
-                    +selectedStudent.getAddress();
+            String msg = "ID: "+ selectedStudent.getId() + "\n"
+                    + "Name: " + selectedStudent.getName() + "\n"
+                    + "Phone:" + selectedStudent.getPhone() + "\n"
+                    + "Email:" + selectedStudent.getEmail() + "\n"
+                    + "Address: " + selectedStudent.getAddress();
             JOptionPane.showMessageDialog(view,msg,"Information",JOptionPane.INFORMATION_MESSAGE);
         }
     }
@@ -145,7 +150,7 @@ public class LecturerController implements IController {
     private void selectRow(ListSelectionEvent listSelectionEvent) {
         int selectedRow = view.getTblTopStudent().getSelectedRow();
         if (selectedRow != -1) {
-            selectedStudent = studentTopList.get(selectedRow);
+            selectedStudent = studentList.get(selectedRow);
             fillForm();
         }
     }
@@ -163,23 +168,7 @@ public class LecturerController implements IController {
         return lecturerFrame;
     }
 
-    private Student getStudent() {
-        try {
-            String id = view.getLblID().getText();
-            String name = view.getLblName().getText();
-            double markEnglish =  Double.parseDouble(view.getTxtEnglish().getText());
-            double markIT = Double.parseDouble(view.getTxtIT().getText());
-            double markPE = Double.parseDouble(view.getTxtPE().getText());
-            if(markEnglish > 10 || markEnglish < 0 || markIT > 10 || markIT < 0 || markPE > 10 || markPE < 0 ) {
-                JOptionPane.showMessageDialog(view,"Marks must be in range [0 - 10]");
-                return null;
-            }
-            return new Student(id,name,markEnglish,markIT,markPE);
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(view,"Mark is invalid");
-            return null;
-        }
-    }
+
 
     private void fillForm() {
         view.getLblID().setText(selectedStudent.getId());

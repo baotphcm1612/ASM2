@@ -2,7 +2,6 @@ package daos;
 
 import models.Student;
 import utils.JDBCUtil;
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,8 +21,8 @@ public class StudentDAO implements DataAccessObject<Student>{
     public int insert(Student variable) {
         try {
             Connection connection = JDBCUtil.getConnection();
-            String sql = "INSERT INTO Student(ID,NAME,EMAIL,PHONE,GENDER,ADDRESS,IT,ENGLISH,PHYSICALEDU) " +
-                         "VALUES(?,?,?,?,?,?,?,?,?)";
+            String sql = "INSERT INTO Student(ID,NAME,EMAIL,PHONE,GENDER,ADDRESS) " +
+                         "VALUES(?,?,?,?,?,?)";
             PreparedStatement ps = connection.prepareStatement(sql);
             ps.setString(1,variable.getId());
             ps.setString(2,variable.getName());
@@ -31,15 +30,17 @@ public class StudentDAO implements DataAccessObject<Student>{
             ps.setString(4,variable.getPhone());
             ps.setString(5,variable.getGender());
             ps.setString(6, variable.getAddress());
-            ps.setDouble(7,0);
-            ps.setDouble(8,0);
-            ps.setDouble(9,0);
             int result = ps.executeUpdate();
             JDBCUtil.closeConnection(connection);
+            variable.setMarkPhysicalEdu(0);
+            variable.setMarkIT(0);
+            variable.setMarkEnglish(0);
+            GradeDAO.getInstance().insert(variable);
             return result;
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+
     }
 
     @Override
@@ -47,16 +48,20 @@ public class StudentDAO implements DataAccessObject<Student>{
         try {
             Connection connection = JDBCUtil.getConnection();
             String sql = "UPDATE Student " +
-                         "SET " +
-                         "IT = ?, " +
-                         "ENGLISH = ?, " +
-                         "PHYSICALEDU = ? " +
-                         "WHERE ID = ?";
+                    "SET " +
+                    "NAME = ?, " +
+                    "GENDER = ?, " +
+                    "PHONE = ?, " +
+                    "ADDRESS = ?, " +
+                    "EMAIL = ? " +
+                    "WHERE ID = ?";
             PreparedStatement ps = connection.prepareStatement(sql);
-            ps.setDouble(1,variable.getMarkIT());
-            ps.setDouble(2,variable.getMarkEnglish());
-            ps.setDouble(3,variable.getMarkPhysicalEdu());
-            ps.setString(4,variable.getId());
+            ps.setString(1,variable.getName());
+            ps.setString(2,variable.getGender());
+            ps.setString(3,variable.getPhone());
+            ps.setString(4,variable.getAddress());
+            ps.setString(5,variable.getEmail());
+            ps.setString(6,variable.getId());
             int result = ps.executeUpdate();
             JDBCUtil.closeConnection(connection);
             return result;
@@ -67,6 +72,7 @@ public class StudentDAO implements DataAccessObject<Student>{
 
     @Override
     public int delete(Student variable) {
+        GradeDAO.getInstance().delete(variable);
         try {
             Connection connection = JDBCUtil.getConnection();
             String sql = "DELETE FROM Student " +
@@ -114,19 +120,6 @@ public class StudentDAO implements DataAccessObject<Student>{
         }
     }
 
-    public List<Student> getTopStudent() {
-        List<Student> studentList = new ArrayList<>();
-        try {
-            Connection connection = JDBCUtil.getConnection();
-            String sql = "SELECT TOP 3 * " +
-                         "FROM Student " +
-                         "ORDER BY (ENGLISH + PhysicalEdu + IT) / 3 DESC";
-            return getStudents(studentList, connection, sql);
-        } catch (SQLException ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
     private List<Student> getStudents(List<Student> studentList, Connection connection, String sql) throws SQLException {
         Statement statement = connection.createStatement();
         ResultSet rs = statement.executeQuery(sql);
@@ -146,8 +139,5 @@ public class StudentDAO implements DataAccessObject<Student>{
         student.setPhone(rs.getString("Phone"));
         student.setGender(rs.getString("Gender"));
         student.setAddress(rs.getString("Address"));
-        student.setMarkEnglish(rs.getDouble("English"));
-        student.setMarkIT(rs.getDouble("IT"));
-        student.setMarkPhysicalEdu(rs.getDouble("PhysicalEdu"));
     }
 }
