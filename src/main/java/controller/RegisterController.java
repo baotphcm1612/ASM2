@@ -1,6 +1,7 @@
 package controller;
 
 import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.themes.FlatMacDarkLaf;
 import daos.AccountDAO;
 import models.Account;
 import org.springframework.security.crypto.bcrypt.BCrypt;
@@ -22,7 +23,7 @@ public class RegisterController {
 
     private RegisterFrame createFrame() {
         try {
-            UIManager.setLookAndFeel(new FlatDarkLaf());
+            UIManager.setLookAndFeel(new FlatMacDarkLaf());
         } catch (UnsupportedLookAndFeelException e) {
             throw new RuntimeException(e);
         }

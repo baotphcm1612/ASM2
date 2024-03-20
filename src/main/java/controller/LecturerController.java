@@ -1,6 +1,7 @@
 package controller;
 
 import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.themes.FlatMacDarkLaf;
 import daos.GradeDAO;
 import models.Student;
 import views.LecturerFrame;
@@ -99,6 +100,10 @@ public class LecturerController {
     }
 
     private void nextAction(ActionEvent actionEvent) {
+        if(studentList.isEmpty()) {
+            JOptionPane.showMessageDialog(view,"Danh sách rỗng!");
+            return;
+        }
         int selectedIndex = SearchStudent.resultSearchIndex(selectedStudent, studentList);
         if(selectedIndex >= 0 && selectedIndex < studentList.size() - 1) {
             selectedStudent = studentList.get(selectedIndex + 1);
@@ -111,6 +116,10 @@ public class LecturerController {
     }
 
     private void previousAction(ActionEvent actionEvent) {
+        if(studentList.isEmpty()) {
+            JOptionPane.showMessageDialog(view,"Danh sách rỗng!");
+            return;
+        }
         int selectedIndex = SearchStudent.resultSearchIndex(selectedStudent, studentList);
         if(selectedIndex > 0) {
             selectedStudent = studentList.get(selectedIndex - 1);
@@ -157,7 +166,7 @@ public class LecturerController {
 
     private LecturerFrame createFrame() {
         try {
-            UIManager.setLookAndFeel(new FlatDarkLaf());
+            UIManager.setLookAndFeel(new FlatMacDarkLaf());
         } catch (UnsupportedLookAndFeelException e) {
             throw new RuntimeException(e);
         }

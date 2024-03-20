@@ -278,7 +278,7 @@ public class LecturerFrame extends JFrame {
             btnFirst.setText("Fir");
 
             //---- btnShowInfor ----
-            btnShowInfor.setText("Infor");
+            btnShowInfor.setText("Info");
 
             GroupLayout panel2Layout = new GroupLayout(panel2);
             panel2.setLayout(panel2Layout);
